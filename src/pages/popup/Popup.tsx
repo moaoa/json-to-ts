@@ -26,7 +26,7 @@ export default function Popup(): JSX.Element {
 
   const handleJsonInputChange = (value: string) => {
     setJsonInputValue(value);
-    console.log(convert(value));
+    convert(value);
   };
   const tabs = ["JSON", "Result"];
   return (
