@@ -1,5 +1,4 @@
 import React from "react";
-import logo from "@assets/img/logo.svg";
 import { twMerge } from "tailwind-merge";
 import JsonToTS from "json-to-ts";
 import {
@@ -8,17 +7,21 @@ import {
 } from "react-codemirror2";
 import "codemirror/lib/codemirror.css";
 import "codemirror/mode/javascript/javascript";
+import { useLocalStorage } from "@src/hooks/useLocalStorage";
 // note: you must install codemirror@version5 for this to work
 
 export default function Popup(): JSX.Element {
   const [tabIndex, setTabIndex] = React.useState(0);
-  const [result, setResult] = React.useState("");
-  const [jsonInputValue, setJsonInputValue] = React.useState("");
+  const [result, setResult] = useLocalStorage("result", "");
+  const [jsonInputValue, setJsonInputValue] = useLocalStorage("jsonInput", "");
 
   const convert = (json: string) => {
     try {
-      const res = JSON.parse(json);
-      setResult(JsonToTS(res)?.[0]);
+      const raw = JSON.parse(json) as object;
+      const compiled = JsonToTS(raw);
+      const res = compiled.reduce((acc, item) => acc + item + "\n\n", "");
+
+      setResult(res);
     } catch (error) {
       console.log(error);
     }
@@ -30,7 +33,7 @@ export default function Popup(): JSX.Element {
   };
   const tabs = ["JSON", "Result"];
   return (
-    <div className="absolute top-0 left-0 right-0 bottom-0 text-center h-full p-3 bg-gray-800">
+    <div className="absolute top-0 left-0 right-0 bottom-0 text-center h-full p-3 bg-gray-800 overflow-y-scroll">
       {/* start: tabs */}
       <ul className="flex flex-wrap text-sm font-medium text-center  border-b border-gray-700 text-gray-400">
         {tabs.map((tab, index) => (
