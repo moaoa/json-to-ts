@@ -1,14 +1,15 @@
-import React from "react";
+import React, { forwardRef, useEffect, useRef } from "react";
 import { twMerge } from "tailwind-merge";
 import JsonToTS from "json-to-ts";
-import {
-  Controlled as CodeMirror,
-  UnControlled as ReadOnlyEditor,
-} from "react-codemirror2";
-import "codemirror/lib/codemirror.css";
-import "codemirror/mode/javascript/javascript";
+// import {
+//   Controlled as CodeMirror,
+//   UnControlled as ReadOnlyEditor,
+// } from "react-codemirror2";
+// import "codemirror/lib/codemirror.css";
+// import "codemirror/mode/javascript/javascript";
 import { useLocalStorage } from "@src/hooks/useLocalStorage";
-// note: you must install codemirror@version5 for this to work
+// import Editor, { useMonaco } from "@monaco-editor/react";
+import { editor } from "monaco-editor";
 
 const TABS = {
   INPUT_TAB: 0,
@@ -19,6 +20,9 @@ export default function Popup(): JSX.Element {
   const [tabIndex, setTabIndex] = React.useState(0);
   const [result, setResult] = useLocalStorage("result", "");
   const [jsonInputValue, setJsonInputValue] = useLocalStorage("jsonInput", "");
+  // const editorRef = useRef<typeof Editor | null>(null);
+  const JSON_InputMonacoEditorRef = useRef(null);
+  const TS_MonacoEditorRef = useRef(null);
 
   const convert = (json: string) => {
     try {
@@ -51,6 +55,41 @@ export default function Popup(): JSX.Element {
     setJsonInputValue(value);
     convert(value);
   };
+
+  // const monaco = useMonaco();
+
+  // useEffect(() => {
+  //   if (monaco) {
+  //     console.log("here is the monaco instance:", monaco);
+  //   }
+  // }, [monaco]);
+
+  // const handleEditorDidMount = (editor: any /*_monaco: unknown*/) => {
+  //   console.log("editor: ", editor);
+  //   editorRef.current = editor;
+  // };
+
+  const MyEditor = forwardRef((props, ref) => {
+    console.log("myEiditor ref: ", ref);
+    return <div className="h-96" {...props} ref={ref}></div>;
+  });
+
+  useEffect(() => {
+    console.log("editor: ", JSON_InputMonacoEditorRef.current);
+
+    if (JSON_InputMonacoEditorRef.current) {
+      const editorInstance = editor.create(JSON_InputMonacoEditorRef.current, {
+        // language: "json",
+        theme: "vs-dark",
+      });
+      console.log("editorInstance: ", editorInstance);
+      const model = editorInstance.getModel();
+      model?.onDidChangeContent(() => {
+        console.log("model: ", model.getValue());
+      });
+    }
+  }, [JSON_InputMonacoEditorRef.current]);
+
   const tabs = ["JSON", "Result"];
   return (
     <div className="absolute top-0 left-0 right-0 bottom-0 text-center h-[500px] p-3 bg-gray-800 overflow-y-scroll">
@@ -102,28 +141,12 @@ export default function Popup(): JSX.Element {
       <div className="flex p-4">
         {tabIndex === TABS.INPUT_TAB && (
           <div className="text-left w-full">
-            <CodeMirror
-              value={jsonInputValue}
-              options={{
-                lineNumbers: true,
-                mode: "javascript",
-                theme: "material",
-              }}
-              onBeforeChange={(editor, data, value) => {
-                handleJsonInputChange(value);
-              }}
-            />
+            <MyEditor ref={JSON_InputMonacoEditorRef} />
           </div>
         )}
         {tabIndex === TABS.OUTPUT_TAB && (
           <div className="text-left w-full">
-            <ReadOnlyEditor
-              value={result}
-              options={{
-                lineNumbers: true,
-                theme: "dark",
-              }}
-            />
+            <MyEditor ref={TS_MonacoEditorRef} />
           </div>
         )}
       </div>
